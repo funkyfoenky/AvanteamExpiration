@@ -1,0 +1,43 @@
+#activity-timer-root-fixed { position: fixed; right: 16px; top: var(--timer-top, 72px); z-index: 2147483000; }
+
+/* --- STYLE DEMANDÉ --- */
+#activity-timer-card{
+  display:inline-flex;align-items:center;gap:10px;
+  padding:6px 10px;border-radius:999px;
+  background: transparent;
+  color:#111;
+  border:0;
+  box-shadow:none;
+  font:500 13px/1 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue";
+}
+
+#activity-timer-dot{
+  width:8px;height:8px;border-radius:999px;
+  background:#22c55e;
+  box-shadow:none;
+}
+
+#activity-timer-time{
+  font-variant-numeric:tabular-nums; min-width:44px; text-align:center;
+}
+
+/* Bouton clair, texte noir */
+#activity-timer-reset{
+  appearance:none; cursor:pointer;
+  padding:4px 10px; border-radius:999px;
+  background: rgba(0,0,0,.08);
+  color:#111;
+  border:1px solid rgba(0,0,0,.12);
+  font-weight:600;
+}
+#activity-timer-reset:hover{
+  background: rgba(0,0,0,.14);
+  border-color: rgba(0,0,0,.20);
+}
+
+/* Expiré : point rouge */
+#activity-timer-root-fixed.expired #activity-timer-dot{ background:#ef4444; }
+
+/* Petit flash visuel au reset (optionnel) */
+#activity-timer-root-fixed.pulse { animation: at-pulse .15s ease-out 1; }
+@keyframes at-pulse { from { transform: scale(1.03); } to { transform: scale(1); } }

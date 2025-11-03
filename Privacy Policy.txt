@@ -1,0 +1,18 @@
+Privacy Policy – Activity Timer Reset Everywhere
+
+Last updated: 03-Nov-2025
+
+Your privacy is important to us.
+This Chrome extension (“Activity Timer Reset Everywhere”) does not collect, store, or transmit any personally identifiable information without your consent.
+
+Data Usage
+The Extension only stores configuration data locally in your browser (via Chrome storage). No information is transmitted to external servers.
+
+Permissions
+The Extension requests certain permissions (e.g., tabs, storage) solely to provide its core functionality. These permissions are not used to track user activity.
+
+Third Parties
+We do not share, sell, or transmit any user data to third parties.
+
+Contact
+If you have questions, please contact us at: qms_support@biocodex.com

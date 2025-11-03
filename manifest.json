@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Activity Timer Reset Everywhere",
+  "version": "1.0.1",
+  "description": "Timer en haut à droite, reset sur n'importe quel clic (toutes frames / iframes).",
+  "permissions": ["tabs", "scripting", "storage"],
+  "host_permissions": ["https://biocodex.avanteam-online.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": ["https://biocodex.avanteam-online.com/*"],
+      "js": ["content.js"],
+      "css": ["styles.css"],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_about_blank": true
+    }
+  ]
+}
