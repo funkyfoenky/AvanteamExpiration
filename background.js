@@ -34,10 +34,14 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
 
       let closed = false;
       let timeoutId = null;
+      let checkUrlIntervalId = null;
+      let waitingForLogin = false;
+      let finishScheduled = false;
 
       const cleanup = () => {
         chrome.tabs.onUpdated.removeListener(onUpdated);
         if (timeoutId) clearTimeout(timeoutId);
+        if (checkUrlIntervalId) clearTimeout(checkUrlIntervalId);
       };
 
       const finish = () => {
@@ -77,16 +81,81 @@ chrome.runtime.onMessage.addListener((msg, sender) => {
         });
       };
 
-      const onUpdated = (tabId, changeInfo) => {
-        if (tabId === newTabId && changeInfo.status === "complete") {
-          // Laisse un court délai pour laisser le site confirmer l’accessibilité
-          setTimeout(finish, 500);
+      // Vérifie si l'onglet est sur la page de connexion Microsoft
+      const isOnMicrosoftLogin = async (tabId) => {
+        try {
+          const tab = await chrome.tabs.get(tabId);
+          return tab?.url?.includes('login.microsoftonline.com') ?? false;
+        } catch {
+          return false;
+        }
+      };
+
+      // Surveille les changements d'URL pour détecter la fin de la connexion
+      const checkUrlChange = async () => {
+        if (closed || !waitingForLogin || finishScheduled) return; // Arrête si déjà fermé ou si on n'attend plus la connexion
+        
+        const onLoginPage = await isOnMicrosoftLogin(newTabId);
+        if (!onLoginPage) {
+          // Plus sur la page de connexion, on peut fermer après un court délai
+          scheduleFinish(1000);
+        } else {
+          // Toujours sur la page de connexion, on continue à surveiller
+          // On vérifie à nouveau dans 1 seconde
+          checkUrlIntervalId = setTimeout(checkUrlChange, 1000);
+        }
+      };
+
+      const scheduleFinish = (delay = 1000) => {
+        if (finishScheduled || closed) return;
+        finishScheduled = true;
+        waitingForLogin = false;
+        if (checkUrlIntervalId) clearTimeout(checkUrlIntervalId);
+        setTimeout(finish, delay);
+      };
+
+      const onUpdated = async (tabId, changeInfo) => {
+        if (tabId === newTabId && !closed) {
+          // Si l'URL change et qu'on attendait la connexion, vérifier si on est toujours sur la page de login
+          if (changeInfo.url && waitingForLogin) {
+            const onLoginPage = await isOnMicrosoftLogin(newTabId);
+            if (!onLoginPage) {
+              // L'URL a changé et on n'est plus sur la page de login, la connexion est probablement terminée
+              scheduleFinish(1000);
+            }
+          }
+          
+          // Quand la page est complètement chargée
+          if (changeInfo.status === "complete") {
+            const onLoginPage = await isOnMicrosoftLogin(newTabId);
+            
+            if (onLoginPage) {
+              // On est sur la page de connexion Microsoft, on attend que l'utilisateur se connecte
+              if (!waitingForLogin) {
+                waitingForLogin = true;
+                // On surveille les changements d'URL
+                checkUrlChange();
+              }
+            } else {
+              // Pas sur la page de connexion
+              if (!waitingForLogin) {
+                // Si on n'attendait pas la connexion, on ferme normalement
+                scheduleFinish(500);
+              }
+              // Si on attendait la connexion et qu'on n'est plus sur la page de login,
+              // c'est qu'on vient de se connecter, donc on ferme (déjà géré par le check d'URL ci-dessus)
+            }
+          }
         }
       };
       chrome.tabs.onUpdated.addListener(onUpdated);
 
-      // Filet de sécurité si jamais la page ne passe pas à "complete"
-      timeoutId = setTimeout(finish, 20000);
+      // Filet de sécurité si jamais la page ne passe pas à "complete" ou si la connexion prend trop de temps
+      timeoutId = setTimeout(() => {
+        if (!closed && !finishScheduled) {
+          scheduleFinish(0);
+        }
+      }, 60000); // Augmenté à 60 secondes pour laisser le temps de se connecter
     });
   }
 });
